@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 45
 
     steps:
       - name: Checkout source
@@ -24,15 +25,43 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
       - name: Make Gradle executable
-        run: chmod +x gradlew
+        run: chmod +x ./gradlew
 
-      - name: Build mod
-        run: ./gradlew clean build --no-daemon --stacktrace
+      - name: Check Java versions
+        run: |
+          java -version
+          ./gradlew --version
 
-      - name: Upload JAR
+      - name: Build ChocolateQuest Repoured
+        id: compile
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew clean build \
+            --refresh-dependencies \
+            --no-daemon \
+            --info \
+            --stacktrace \
+            --console=plain 2>&1 | tee build.log
+
+      - name: Upload build logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ChocolateQuestRepoured-1.16.5
+          name: ChocolateQuest-Build-Logs
+          path: |
+            build.log
+            **/build/reports/**
+          if-no-files-found: ignore
+
+      - name: Upload compiled JAR
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChocolateQuestRepoured-1.16.5-JAR
           path: build/libs/*.jar
           if-no-files-found: error
