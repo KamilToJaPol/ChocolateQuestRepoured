@@ -1,36 +1,38 @@
-name: Build
+
+name: Build ChocolateQuest 1.16.5
 
 on:
-  push:
-    branches:
-      - 1.12.2
-  schedule:
-    - cron: '0 2 1 * *'
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+
     steps:
-    - name: checkout
-      uses: actions/checkout@v7
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-    - name: setup-java
-      uses: actions/setup-java@v5
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+      - name: Install Java 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
 
-    - name: setup-gradle
-      uses: gradle/actions/setup-gradle@v6
+      - name: Install Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-    - name: executable
-      run: chmod +x gradlew
+      - name: Make Gradle executable
+        run: chmod +x gradlew
 
-    - name: build
-      run: ./gradlew build
+      - name: Build mod
+        run: ./gradlew clean build --no-daemon --stacktrace
 
-    - name: upload
-      uses: actions/upload-artifact@v7
-      with:
-        path: 'build/libs/*.jar'
-        archive: false
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChocolateQuestRepoured-1.16.5
+          path: build/libs/*.jar
+          if-no-files-found: error
